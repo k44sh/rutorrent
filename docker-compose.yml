@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  ### https://github.com/k44sh/rutorrent
+  rutorrent:
+    image: k44sh/rutorrent
+    container_name: rutorrent
+    hostname: rutorrent
+    restart: always
+    ports:
+      - target: ${RT_DHT_PORT}
+        published: ${RT_DHT_PORT}
+        protocol: udp
+      - target: ${RUTORRENT_PORT}
+        published: ${RUTORRENT_PORT}
+        protocol: tcp
+      - target: ${WEBDAV_PORT}
+        published: ${WEBDAV_PORT}
+        protocol: tcp
+      - target: ${RT_INC_PORT}
+        published: ${RT_INC_PORT}
+        protocol: tcp
+    volumes:
+      - config:/config:rw
+      - data:/data:rw
+      - passwd:/passwd:rw
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    env_file:
+      - .env
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 32000
+        hard: 40000
+
+volumes:
+  config:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "./config"
+  data:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "./data"
+  passwd:
+    driver: local
+    driver_opts:
+      type: "none"
+      o: "bind"
+      device: "./passwd"

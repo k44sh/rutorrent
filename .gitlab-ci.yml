@@ -1,0 +1,287 @@
+image: alpine:latest
+
+stages:
+  - Check
+  - Build
+  - Test
+  - Staging
+  - Deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+services:
+  - name: docker:dind
+
+Container build:
+  stage: Build
+  image:
+    name: docker:latest
+  variables:
+    GIT_STRATEGY: clone
+  rules:
+    - if: $BUILD == "no"
+      when: never
+    - if: $FORCE == "yes"
+    - if: $CI_COMMIT_REF_NAME =~ /^((dev|dev-.+)|(v\d.+))$/
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  tags:
+    - saas-linux-medium-amd64
+  after_script:
+    - docker logout $CI_REGISTRY
+    - docker logout ghcr.io
+    - docker logout docker.io
+  script:
+    - |
+      apk --update --no-cache add git
+      docker buildx create --use --name multi-arch
+      if [[ "$CI_PIPELINE_SOURCE" == "merge_request_event" ]]; then
+        echo -e "\n🦺 Source :\e[1;32m Merge Request\e[0m"
+        echo -n $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+        docker buildx bake --print quick
+        docker buildx bake -f docker-bake.hcl quick
+      else
+        echo -n $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+        echo -n $GITHUB_TOKEN | docker login -u $GITHUB_USER  --password-stdin ghcr.io
+        echo -n $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USER --password-stdin docker.io
+      fi
+      if [[ ! -z "$CI_COMMIT_BRANCH" ]]; then
+        echo -e "\n🔨 Version :\e[1;32m $CI_COMMIT_BRANCH\e[0m"
+        if [[ "$CI_COMMIT_BRANCH" =~ /^dev-.+$/ ]]; then
+          docker buildx bake --print quick
+          docker buildx bake -f docker-bake.hcl quick
+        else
+          docker buildx bake --print dev
+          docker buildx bake -f docker-bake.hcl dev
+        fi
+      fi
+      if [[ "$CI_PIPELINE_SOURCE" == "schedule" ]]; then
+        echo -e "\n⏰ Source :\e[1;32m Scheduled\e[0m"
+        docker buildx bake --print edge
+        docker buildx bake -f docker-bake.hcl edge
+      fi
+      if [[ ! -z "$CI_COMMIT_TAG" ]]; then
+        tag=$(git tag --list --sort=creatordate | tail -1)
+        docker manifest inspect $CI_REGISTRY_IMAGE:$tag > /dev/null 2>&1 || exit_code=$?
+        if [[ $exit_code != 0 ]]; then
+          echo -e "\n🏁 Tag :\e[1;32m ${tag}\e[0m"
+          tag=$tag docker buildx bake --print prod
+          tag=$tag docker buildx bake -f docker-bake.hcl prod
+        else
+          echo -e "\n⛔ Tag :\e[1;32m ${tag}\e[0m already exist in registry."
+          exit 0
+        fi
+      fi
+
+Automatic tests:
+  stage: Test
+  image:
+    name: docker:latest
+  variables:
+    GIT_STRATEGY: none
+  needs:
+    - job: Container build
+      optional: true
+  rules:
+    - if: $BUILD == "no"
+      when: never
+    - if: $FORCE == "yes"
+    - if: $CI_COMMIT_REF_NAME =~ /^((dev|dev-.+)|(v\d.+))$/
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  tags:
+    - saas-linux-medium-amd64
+  before_script:
+    - echo -n $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+  after_script:
+    - docker logout $CI_REGISTRY
+  script:
+    - apk --update --no-cache add curl
+    - |
+      docker run --rm -d --name $CI_PROJECT_NAME $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+      for i in $(seq 120); do
+        status=$(docker inspect -f '{{ .State.Health.Status }}' $CI_PROJECT_NAME 2>/dev/null)
+        if [[ $? -eq 0 ]]; then
+          if [[ "${status}" == "healthy" ]]; then
+            docker logs $CI_PROJECT_NAME
+            echo -e "\n✅ The container is \e[1;32mhealthy\e[0m after \e[1;5m${i}\e[0m seconds\n"
+            docker stop $CI_PROJECT_NAME >/dev/null 2>&1
+            exit 0
+          elif [[ "${status}" == "unhealthy" ]]; then
+            echo -e "❌ The container is \e[1;33munhealthy\e[0m"
+            docker stop $CI_PROJECT_NAME >/dev/null 2>&1
+            exit 1
+          elif [[ "${status}" == "starting" ]]; then
+            echo "... starting"
+          else
+            echo -e "❓ The container is in \e[1;31munknown\e[0m state ($status)"
+            docker stop $CI_PROJECT_NAME >/dev/null 2>&1
+            exit 1
+          fi
+        else
+          echo -e "❌ \e[1;31mDocker error\e[0m"
+          docker logs $CI_PROJECT_NAME
+          exit 1
+        fi
+        sleep 1
+      done
+
+Staging deploy:
+  stage: Staging
+  image:
+    name: alpine:latest
+  variables:
+    GIT_STRATEGY: none
+  needs:
+    - job: Container build
+      optional: true
+    - job: Automatic tests
+      optional: true
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED != "true"
+      when: never
+    - if: $FORCE == "yes"
+    - if: $CI_COMMIT_TAG =~ /^v\d.+$/
+  tags:
+    - saas-linux-medium-amd64
+  script:
+    - |
+      apk --update --no-cache add openssh-client
+      chmod og= $SSH_KEY
+      ssh -i $SSH_KEY -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
+        set -e
+        if [ \$(docker ps -aq -f name=${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}) ]; then
+          if [ \$(docker ps -aq -f status=running -f name=${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}) ]; then
+            docker stop ${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}
+          fi
+          docker rm ${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}
+          docker volume rm \$(docker volume ls -q|grep ${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_)
+          docker image rm $CI_REGISTRY_IMAGE
+          rm -rf ${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}
+        fi
+        git clone --branch $CI_COMMIT_REF_NAME $CI_REPOSITORY_URL ${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}
+        cd ${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA} && git remote remove origin
+        mkdir {config,data,passwd}
+        htpasswd -Bbn $HTTP_USER $HTTP_PASS > passwd/rutorrent.htpasswd
+        echo -n $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+        sed -i \"s/container_name.*/container_name: ${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}/g\" docker-compose.yml
+        sed -i \"s,image:.*,image: $CI_REGISTRY_IMAGE,g\" docker-compose.yml
+        docker compose up -d
+        sleep 3
+        docker compose logs
+        docker logout $CI_REGISTRY
+      "
+  environment:
+    name: Seedbox Staging
+    action: start
+    url: $SEEDBOX_URL
+    on_stop: Staging stop
+    auto_stop_in: 6h
+    deployment_tier: staging
+  when: manual
+
+Staging stop:
+  stage: Staging
+  image:
+    name: alpine:latest
+  variables:
+    GIT_STRATEGY: none
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED != "true"
+      when: never
+    - if: $FORCE == "yes"
+    - if: $CI_COMMIT_TAG =~ /^v\d.+$/
+  tags:
+    - saas-linux-medium-amd64
+  script:
+    - |
+      apk --update --no-cache add openssh-client
+      chmod og= $SSH_KEY
+      ssh -i $SSH_KEY -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
+        set -e
+        if [ \$(docker ps -aq -f name=${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}) ]; then
+          if [ \$(docker ps -aq -f status=running -f name=${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}) ]; then
+            docker stop ${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}
+          fi
+          docker rm ${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}
+          docker volume rm \$(docker volume ls -q|grep ${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}_)
+          docker image rm $CI_REGISTRY_IMAGE
+          rm -rf ${CI_PROJECT_NAME}_${CI_COMMIT_SHORT_SHA}
+        fi
+      "
+  environment:
+    name: Seedbox Staging
+    action: stop
+  when: manual
+
+.Prod deploy:
+  stage: Deploy
+  image:
+    name: alpine:latest
+  variables:
+    GIT_STRATEGY: none
+  needs:
+    - job: Container build
+      optional: true
+    - job: Automatic tests
+      optional: true
+    - job: Staging deploy
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED != "true"
+      when: never
+    - if: $FORCE == "yes"
+    - if: $CI_COMMIT_TAG =~ /^v\d.+$/
+  tags:
+    - saas-linux-medium-amd64
+  script:
+    - |
+      apk --update --no-cache add openssh-client
+      chmod og= $SSH_KEY
+      ssh -i $SSH_KEY -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
+        set -e
+        git clone --branch $CI_COMMIT_REF_NAME $CI_REPOSITORY_URL ${CI_PROJECT_NAME}
+        cd ${CI_PROJECT_NAME} && git remote remove origin
+        echo TODO
+      "
+  environment:
+    name: Seedbox Prod
+    action: start
+    url: $SEEDBOX_URL
+    on_stop: Prod stop
+    deployment_tier: production
+  when: manual
+
+.Prod stop:
+  stage: Deploy
+  image:
+    name: alpine:latest
+  variables:
+    GIT_STRATEGY: none
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED != "true"
+      when: never
+    - if: $FORCE == "yes"
+    - if: $CI_COMMIT_TAG =~ /^v\d.+$/
+  tags:
+    - saas-linux-large-amd64
+  script:
+    - |
+      apk --update --no-cache add openssh-client
+      chmod og= $SSH_KEY
+      ssh -i $SSH_KEY -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "
+        set -e
+        if [ \$(docker ps -aq -f name=${CI_PROJECT_NAME}) ]; then
+          if [ \$(docker ps -aq -f status=running -f name=${CI_PROJECT_NAME}) ]; then
+            docker stop ${CI_PROJECT_NAME}
+          fi
+          docker rm ${CI_PROJECT_NAME}
+          docker volume rm \$(docker volume ls -q|grep ${CI_PROJECT_NAME}_)
+          docker image rm $CI_REGISTRY_IMAGE
+        fi
+        echo TODO
+      "
+  environment:
+    name: Seedbox Prod
+    action: stop
+  when: manual
