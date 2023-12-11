@@ -36,7 +36,7 @@ target "local" {
 
 target "registry" {
   inherits  = [ "default" ]
-  output    = [ "type=registry" ]
+  output    = [ "type=image,push=true" ]
   cache-to  = [ "type=registry,mode=max,ref=${dockerhub}:cache" ]
   labels    = {
     "org.opencontainers.image.title" = "${CI_PROJECT_TITLE}"
@@ -50,7 +50,6 @@ target "registry" {
 
 target "quick" {
   inherits   = [ "registry" ]
-  output     = [ "type=registry" ]
   cache-to   = [ "" ]
   tags       = [ "${gitlab}:${CI_COMMIT_SHA}" ]
   labels     = { "org.opencontainers.image.version" = "quick" }
@@ -59,7 +58,6 @@ target "quick" {
 
 target "prod" {
   inherits  = [ "registry" ]
-  output    = [ "type=registry" ]
   tags      = [
     "${gitlab}:${CI_COMMIT_SHA}",
     "${gitlab}:${tag}",
@@ -79,7 +77,6 @@ target "prod" {
 
 target "dev" {
   inherits   = [ "registry" ]
-  output     = [ "type=registry" ]
   tags       = [
     "${gitlab}:${CI_COMMIT_SHA}",
     "${gitlab}:dev",
@@ -96,7 +93,6 @@ target "dev" {
 
 target "edge" {
   inherits   = [ "registry" ]
-  output     = [ "type=registry" ]
   tags       = [
     "${gitlab}:${CI_COMMIT_SHA}",
     "${gitlab}:edge",
@@ -115,7 +111,6 @@ target "edge" {
 
 target "prod-amd64" {
   inherits  = [ "registry" ]
-  output    = [ "type=registry" ]
   cache-from = [
     "type=registry,ref=${dockerhub}:amd64-${tag}",
     "type=registry,ref=${dockerhub}:amd64-latest"
@@ -134,7 +129,6 @@ target "prod-amd64" {
 
 target "dev-amd64" {
   inherits   = [ "registry" ]
-  output     = [ "type=registry" ]
   cache-from = [ "type=registry,ref=${dockerhub}:amd64-dev" ]
   tags       = [ 
     "${gitlab}:amd64-dev",
@@ -147,7 +141,6 @@ target "dev-amd64" {
 
 target "edge-amd64" {
   inherits   = [ "registry" ]
-  output     = [ "type=registry" ]
   cache-from = [ "type=registry,ref=${dockerhub}:amd64-edge" ]
   tags       = [ 
     "${gitlab}:amd64-edge",
@@ -161,13 +154,12 @@ target "edge-amd64" {
 ### ARM Targets
 
 target "prod-arm64" {
-  inherits  = [ "registry" ]
-  output    = [ "type=registry" ]
+  inherits   = [ "registry" ]
   cache-from = [
     "type=registry,ref=${dockerhub}:arm64-${tag}",
     "type=registry,ref=${dockerhub}:arm64-latest"
   ]
-  tags      = [
+  tags       = [
     "${gitlab}:arm64-${tag}",
     "${gitlab}:arm64-latest",
     "${github}:arm64-${tag}",
@@ -175,18 +167,17 @@ target "prod-arm64" {
     "${dockerhub}:arm64-${tag}",
     "${dockerhub}:arm64-latest"
   ]
-  labels    = { "org.opencontainers.image.version" = "${tag}" }
-  platforms = [ "linux/arm64" ]
+  labels     = { "org.opencontainers.image.version" = "${tag}" }
+  platforms  = [ "linux/arm64" ]
 }
 
 target "prod-armv7" {
-  inherits  = [ "registry" ]
-  output    = [ "type=registry" ]
+  inherits   = [ "registry" ]
   cache-from = [
     "type=registry,ref=${dockerhub}:armv7-${tag}",
     "type=registry,ref=${dockerhub}:armv7-latest"
   ]
-  tags      = [
+  tags       = [
     "${gitlab}:armv7-${tag}",
     "${gitlab}:armv7-latest",
     "${github}:armv7-${tag}",
@@ -194,13 +185,12 @@ target "prod-armv7" {
     "${dockerhub}:armv7-${tag}",
     "${dockerhub}:armv7-latest"
   ]
-  labels    = { "org.opencontainers.image.version" = "${tag}" }
-  platforms = [ "linux/arm/v7" ]
+  labels     = { "org.opencontainers.image.version" = "${tag}" }
+  platforms  = [ "linux/arm/v7" ]
 }
 
 target "dev-arm64" {
   inherits   = [ "registry" ]
-  output     = [ "type=registry" ]
   cache-from = [ "type=registry,ref=${dockerhub}:arm64-dev" ]
   tags       = [ 
     "${gitlab}:arm64-dev",
@@ -213,7 +203,6 @@ target "dev-arm64" {
 
 target "dev-armv7" {
   inherits   = [ "registry" ]
-  output     = [ "type=registry" ]
   cache-from = [ "type=registry,ref=${dockerhub}:armv7-dev" ]
   tags       = [ 
     "${gitlab}:armv7-dev",
@@ -226,7 +215,6 @@ target "dev-armv7" {
 
 target "edge-arm64" {
   inherits   = [ "registry" ]
-  output     = [ "type=registry" ]
   cache-from = [ "type=registry,ref=${dockerhub}:arm64-edge" ]
   tags       = [ 
     "${gitlab}:arm64-edge",
@@ -239,7 +227,6 @@ target "edge-arm64" {
 
 target "edge-armv7" {
   inherits   = [ "registry" ]
-  output     = [ "type=registry" ]
   cache-from = [ "type=registry,ref=${dockerhub}:armv7-edge" ]
   tags       = [ 
     "${gitlab}:armv7-edge",
