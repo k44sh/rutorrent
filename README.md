@@ -1,10 +1,10 @@
 <p align="center"><a href="https://gitlab.com/cyberpnkz/rutorrent" target="_blank"><img width="1536" src="https://raw.githubusercontent.com/k44sh/rutorrent/main/.rutorrent.png"></a></p>
 
 <p align="center">
-  <a href="https://hub.docker.com/r/k44sh/rutorrent/tags?page=1&ordering=last_updated"><img src="https://img.shields.io:/docker/v/k44sh/rutorrent/latest?logo=docker" alt="Latest Version"></a>
-  <a href="https://hub.docker.com/r/k44sh/rutorrent/"><img src="https://img.shields.io:/docker/image-size/k44sh/rutorrent?logo=docker" alt="Docker Size"></a>
+  <a href="https://hub.docker.com/r/k44sh/rutorrent/tags?page=1&ordering=last_updated"><img src="https://img.shields.io/docker/v/k44sh/rutorrent/v4.2.9?logo=docker" alt="Latest Version"></a>
+  <a href="https://hub.docker.com/r/k44sh/rutorrent/"><img src="https://img.shields.io/docker/image-size/k44sh/rutorrent/v4.2.9?logo=docker" alt="Docker Size"></a>
   <a href="https://hub.docker.com/r/k44sh/rutorrent/"><img src="https://img.shields.io:/docker/pulls/k44sh/rutorrent?logo=docker" alt="Docker Pulls"></a>
-  <a href="https://gitlab.com/cyberpnkz/rutorrent/-/pipelines/latest"><img src="https://img.shields.io/gitlab/pipeline-status/cyberpnkz/rutorrent?logo=gitlab" alt="Build Status"></a>
+  <a href="https://gitlab.com/cyberpnkz/rutorrent/-/pipelines/v4.2.9/latest"><img src="https://img.shields.io/gitlab/pipeline-status/cyberpnkz%2Frutorrent?branch=v4.2.9&logo=gitlab" alt="Build Status"></a>
   <a href="https://github.com/k44sh/rutorrent"><img src="https://img.shields.io/github/stars/k44sh/rutorrent?logo=github" alt="Github Stars"></a>
 </p>
 
@@ -17,7 +17,7 @@ ___
 
 * Run as non-root user
 * Multi-platform image
-* [NGINX](https://nginx.org/download) with [PHP 8.2](https://www.php.net/releases/8.2/en.php)
+* [NGINX](https://nginx.org/download) with [PHP 8.3](https://www.php.net/releases/8.3/en.php)
 * [rTorrent](https://github.com/rakshasa/rtorrent) / [libTorrent](https://github.com/rakshasa/libtorrent) release compiled from source
 * Name resolving with [c-ares](https://github.com/rakshasa/rtorrent/wiki/Performance-Tuning#rtrorrent-with-c-ares) for asynchronous DNS requests (including name resolves)
 * [ruTorrent](https://github.com/Novik/ruTorrent) release (`v4.2.9`)
