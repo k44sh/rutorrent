@@ -94,18 +94,18 @@ echo "  ${norm}[${green}+${norm}] Setting PHP-FPM configuration..."
 sed -e "s/@MEMORY_LIMIT@/$MEMORY_LIMIT/g" \
     -e "s/@UPLOAD_MAX_SIZE@/$UPLOAD_MAX_SIZE/g" \
     -e "s/@CLEAR_ENV@/$CLEAR_ENV/g" \
-    -i /etc/php82/php-fpm.d/www.conf
+    -i /etc/php83/php-fpm.d/www.conf
 
 echo "  ${norm}[${green}+${norm}] Setting PHP INI configuration..."
 sed -e "s|memory_limit.*|memory_limit = ${MEMORY_LIMIT}|g" \
     -e "s|;date\.timezone.*|date\.timezone = ${TZ}|g" \
     -e "s|max_file_uploads.*|max_file_uploads = ${MAX_FILE_UPLOADS}|g"  \
-    -i /etc/php82/php.ini
+    -i /etc/php83/php.ini
 
 # OpCache
 echo "  ${norm}[${green}+${norm}] Setting OpCache configuration..."
 sed -e "s/@OPCACHE_MEM_SIZE@/$OPCACHE_MEM_SIZE/g" \
-    -i /etc/php82/conf.d/opcache.ini
+    -i /etc/php83/conf.d/opcache.ini
 
 # Nginx
 echo "  ${norm}[${green}+${norm}] Setting Nginx configuration..."
@@ -281,7 +281,7 @@ cat > /var/www/rutorrent/conf/config.php <<EOL
 \$throttleMaxSpeed = 327625*1024; // DO NOT EDIT THIS LINE!!! DO NOT COMMENT THIS LINE!!!
 
 \$pathToExternals = array(
-    "php"    => '$(which php82)',
+    "php"    => '$(which php83)',
     "curl"   => '',
     "gzip"   => '',
     "7z"     => '',
@@ -482,7 +482,7 @@ chown -R rtorrent: \
   /var/cache/nginx \
   /var/lib/nginx \
   /var/log/nginx \
-  /var/log/php82 \
+  /var/log/php83 \
   /var/run/nginx \
   /var/run/php-fpm \
   /var/run/rtorrent \
@@ -516,7 +516,7 @@ cat > /etc/services.d/php-fpm/run <<EOL
 #!/usr/bin/execlineb -P
 with-contenv
 s6-setuidgid ${PUID}:${PGID}
-php-fpm82 -F
+php-fpm83 -F
 EOL
 chmod +x /etc/services.d/php-fpm/run
 
