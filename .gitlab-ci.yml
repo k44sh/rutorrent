@@ -1,7 +1,6 @@
 image: alpine:latest
 
 stages:
-  - Check
   - Build
   - Test
   - Staging
@@ -27,7 +26,7 @@ Container build:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   tags:
-    - saas-linux-medium-amd64
+    - saas-linux-xlarge-amd64
   after_script:
     - docker logout $CI_REGISTRY
     - docker logout ghcr.io
@@ -41,36 +40,35 @@ Container build:
         echo -n $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
         docker buildx bake --print quick
         docker buildx bake -f docker-bake.hcl quick
-      else
-        echo -n $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-        echo -n $GITHUB_TOKEN | docker login -u $GITHUB_USER  --password-stdin ghcr.io
-        echo -n $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USER --password-stdin docker.io
-      fi
-      if [[ ! -z "$CI_COMMIT_BRANCH" ]]; then
-        echo -e "\n🔨 Version :\e[1;32m $CI_COMMIT_BRANCH\e[0m"
-        if [[ "$CI_COMMIT_BRANCH" =~ /^dev-.+$/ ]]; then
-          docker buildx bake --print quick
-          docker buildx bake -f docker-bake.hcl quick
-        else
-          docker buildx bake --print dev
-          docker buildx bake -f docker-bake.hcl dev
-        fi
-      fi
-      if [[ "$CI_PIPELINE_SOURCE" == "schedule" ]]; then
+      elif [[ "$CI_PIPELINE_SOURCE" == "schedule" ]]; then
         echo -e "\n⏰ Source :\e[1;32m Scheduled\e[0m"
         docker buildx bake --print edge
         docker buildx bake -f docker-bake.hcl edge
-      fi
-      if [[ ! -z "$CI_COMMIT_TAG" ]]; then
-        tag=$(git tag --list --sort=creatordate | tail -1)
-        docker manifest inspect $CI_REGISTRY_IMAGE:$tag > /dev/null 2>&1 || exit_code=$?
-        if [[ $exit_code != 0 ]]; then
-          echo -e "\n🏁 Tag :\e[1;32m ${tag}\e[0m"
-          tag=$tag docker buildx bake --print prod
-          tag=$tag docker buildx bake -f docker-bake.hcl prod
-        else
-          echo -e "\n⛔ Tag :\e[1;32m ${tag}\e[0m already exist in registry."
-          exit 0
+      else
+        echo -n $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+        echo -n $GITHUB_TOKEN | docker login -u $GITHUB_USER --password-stdin ghcr.io
+        echo -n $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USER --password-stdin docker.io
+        if [[ ! -z "$CI_COMMIT_BRANCH" ]]; then
+          echo -e "\n🔨 Version :\e[1;32m $CI_COMMIT_BRANCH\e[0m"
+          if [[ "$CI_COMMIT_BRANCH" =~ /^dev-.+$/ ]]; then
+            docker buildx bake --print quick
+            docker buildx bake -f docker-bake.hcl quick
+          else
+            docker buildx bake --print dev
+            docker buildx bake -f docker-bake.hcl dev
+          fi
+        fi
+        if [[ ! -z "$CI_COMMIT_TAG" ]]; then
+          tag=$(git tag --list --sort=creatordate | tail -1)
+          docker manifest inspect $CI_REGISTRY_IMAGE:$tag > /dev/null 2>&1 || exit_code=$?
+          if [[ $exit_code != 0 ]]; then
+            echo -e "\n🏁 Tag :\e[1;32m ${tag}\e[0m"
+            tag=$tag docker buildx bake --print prod
+            tag=$tag docker buildx bake -f docker-bake.hcl prod
+          else
+            echo -e "\n⛔ Tag :\e[1;32m ${tag}\e[0m already exist in registry."
+            exit 0
+          fi
         fi
       fi
 
@@ -264,7 +262,7 @@ Staging stop:
     - if: $FORCE == "yes"
     - if: $CI_COMMIT_TAG =~ /^v\d.+$/
   tags:
-    - saas-linux-large-amd64
+    - saas-linux-medium-amd64
   script:
     - |
       apk --update --no-cache add openssh-client
