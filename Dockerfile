@@ -7,14 +7,6 @@ ARG XMLRPC_VERSION=01.60.00
 ARG LIBTORRENT_VERSION=0.13.8
 ARG RTORRENT_VERSION=0.9.8
 
-ARG RUTORRENT_REVISION=b317183c25974dd18e9c27a4cab0c598b49ef94f
-ARG GEOIP2_REVISION=dfbf6de79026f9d56a0443f45a6bd6283d740b9a
-ARG FILEMANAGER_REVISION=3e4e06a905717396771702e66383fb6ef9c41544
-ARG RATIOCOLOR_REVISION=3ab4962be86d17fb83649b6db44767796ee377de
-ARG MATERIALDESIGN_REVISION=40dd95ee884ec4b678ac4d45711154b018df3eb5
-ARG QUICKBOX_REVISION=eb63ee8a246681b6c330379daa431c9644111ee9
-ARG RTMODERN_REVISION=6babe10167b0b90a0e0d86ad9859f4d27732b5d8
-
 FROM alpine:${ALPINE_VERSION} AS compile
 
 ENV DIST_PATH="/dist"
@@ -27,6 +19,7 @@ RUN apk --update --no-cache add \
     brotli-dev \
     build-base \
     curl \
+    cppunit-dev \
     fftw-dev \
     gd-dev \
     geoip-dev \
@@ -131,29 +124,23 @@ WORKDIR /dist/rutorrent
 RUN git clone -q "https://github.com/Novik/ruTorrent" . && git reset --hard ${RUTORRENT_REVISION} && rm -rf .git
 RUN rm -rf conf/users plugins/geoip plugins/_cloudflare share
 
-ARG GEOIP2_REVISION
 WORKDIR /dist/rutorrent-geoip2
-RUN git clone -q "https://github.com/Micdu70/geoip2-rutorrent" . && git reset --hard ${GEOIP2_REVISION} && rm -rf .git
+RUN git clone -q "https://github.com/Micdu70/geoip2-rutorrent" . && rm -rf .git
 
-ARG FILEMANAGER_REVISION
 WORKDIR /dist/rutorrent-filemanager
-RUN git clone -q "https://github.com/nelu/rutorrent-filemanager" . && git reset --hard ${FILEMANAGER_REVISION} 
+RUN git clone -q "https://github.com/nelu/rutorrent-filemanager" . 
 
-ARG RATIOCOLOR_REVISION
 WORKDIR /dist/rutorrent-ratio
-RUN git clone -q "https://github.com/Gyran/rutorrent-ratiocolor" . && git reset --hard ${RATIOCOLOR_REVISION} && rm -rf .git
+RUN git clone -q "https://github.com/Gyran/rutorrent-ratiocolor" . && rm -rf .git
 
-ARG MATERIALDESIGN_REVISION
 WORKDIR /dist/rutorrent-theme-material
-RUN git clone -q "https://github.com/TrimmingFool/ruTorrent-MaterialDesign" . && git reset --hard ${MATERIALDESIGN_REVISION} && rm -rf .git
+RUN git clone -q "https://github.com/TrimmingFool/ruTorrent-MaterialDesign" . && rm -rf .git
 
-ARG QUICKBOX_REVISION
 WORKDIR /dist/rutorrent-theme-quick
-RUN git clone -q "https://github.com/TrimmingFool/club-QuickBox" . && git reset --hard ${QUICKBOX_REVISION} && rm -rf .git
+RUN git clone -q "https://github.com/TrimmingFool/club-QuickBox" . && rm -rf .git
 
-ARG RTMODERN_REVISION
 WORKDIR /dist/rutorrent-theme-rtmodern-remix
-RUN git clone -q "https://github.com/Teal-c/rtModern-Remix" . && git reset --hard ${RTMODERN_REVISION} && rm -rf .git \
+RUN git clone -q "https://github.com/Teal-c/rtModern-Remix" . && rm -rf .git \
     && cp -ar /dist/rutorrent-theme-rtmodern-remix /dist/rutorrent-theme-rtmodern-remix-plex \
     && cat themes/plex.css > custom.css \
     && cp -ar /dist/rutorrent-theme-rtmodern-remix /dist/rutorrent-theme-rtmodern-remix-jellyfin \
@@ -186,6 +173,7 @@ RUN apk --update --no-cache add \
     brotli \
     ca-certificates \
     coreutils \
+    cppunit-dev \
     dhclient \
     ffmpeg \
     findutils \
