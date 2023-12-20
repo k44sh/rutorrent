@@ -27,6 +27,10 @@ Container build:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   tags:
     - saas-linux-xlarge-amd64
+  before_script:
+    - echo -n $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - echo -n $GITHUB_TOKEN | docker login -u $GITHUB_USER --password-stdin ghcr.io
+    - echo -n $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USER --password-stdin docker.io
   after_script:
     - docker logout $CI_REGISTRY
     - docker logout ghcr.io
@@ -37,7 +41,6 @@ Container build:
       docker buildx create --use --name multi-arch
       if [[ "$CI_PIPELINE_SOURCE" == "merge_request_event" ]]; then
         echo -e "\n🦺 Source :\e[1;32m Merge Request\e[0m"
-        echo -n $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
         docker buildx bake --print quick
         docker buildx bake -f docker-bake.hcl quick
       elif [[ "$CI_PIPELINE_SOURCE" == "schedule" ]]; then
@@ -45,9 +48,6 @@ Container build:
         docker buildx bake --print edge
         docker buildx bake -f docker-bake.hcl edge
       else
-        echo -n $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-        echo -n $GITHUB_TOKEN | docker login -u $GITHUB_USER --password-stdin ghcr.io
-        echo -n $DOCKERHUB_TOKEN | docker login -u $DOCKERHUB_USER --password-stdin docker.io
         if [[ ! -z "$CI_COMMIT_BRANCH" ]]; then
           echo -e "\n🔨 Version :\e[1;32m $CI_COMMIT_BRANCH\e[0m"
           if [[ "$CI_COMMIT_BRANCH" =~ /^dev-.+$/ ]]; then

@@ -1,10 +1,10 @@
 <p align="center"><a href="https://gitlab.com/cyberpnkz/rutorrent" target="_blank"><img width="1536" src="https://raw.githubusercontent.com/k44sh/rutorrent/main/.rutorrent.png"></a></p>
 
 <p align="center">
-  <a href="https://hub.docker.com/r/k44sh/rutorrent/tags?page=1&ordering=last_updated"><img src="https://img.shields.io/docker/v/k44sh/rutorrent/v4.2.9?logo=docker" alt="Latest Version"></a>
-  <a href="https://hub.docker.com/r/k44sh/rutorrent/"><img src="https://img.shields.io/docker/image-size/k44sh/rutorrent/v4.2.9?logo=docker" alt="Docker Size"></a>
+  <a href="https://hub.docker.com/r/k44sh/rutorrent/tags?page=1&ordering=last_updated"><img src="https://img.shields.io/docker/v/k44sh/rutorrent/latest?logo=docker" alt="Latest Version"></a>
+  <a href="https://hub.docker.com/r/k44sh/rutorrent/"><img src="https://img.shields.io/docker/image-size/k44sh/rutorrent/latest?logo=docker" alt="Docker Size"></a>
   <a href="https://hub.docker.com/r/k44sh/rutorrent/"><img src="https://img.shields.io:/docker/pulls/k44sh/rutorrent?logo=docker" alt="Docker Pulls"></a>
-  <a href="https://gitlab.com/cyberpnkz/rutorrent/-/pipelines/main/latest"><img src="https://img.shields.io/gitlab/pipeline-status/cyberpnkz%2Frutorrent?branch=v4.2.9&logo=gitlab" alt="Build Status"></a>
+  <a href="https://gitlab.com/cyberpnkz/rutorrent/-/pipelines/main/latest"><img src="https://img.shields.io/gitlab/pipeline-status/cyberpnkz%2Frutorrent?branch=main&logo=gitlab" alt="Build Status"></a>
   <a href="https://github.com/k44sh/rutorrent"><img src="https://img.shields.io/github/stars/k44sh/rutorrent?logo=github" alt="Github Stars"></a>
 </p>
 
