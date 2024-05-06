@@ -133,9 +133,6 @@ RUN git clone -q "https://github.com/nelu/rutorrent-filemanager" .
 WORKDIR /dist/rutorrent-ratio
 RUN git clone -q "https://github.com/Gyran/rutorrent-ratiocolor" . && rm -rf .git
 
-WORKDIR /dist/rutorrent-theme-material
-RUN git clone -q "https://github.com/TrimmingFool/ruTorrent-MaterialDesign" . && rm -rf .git
-
 WORKDIR /dist/rutorrent-theme-quick
 RUN git clone -q "https://github.com/TrimmingFool/club-QuickBox" . && rm -rf .git
 
@@ -241,7 +238,6 @@ COPY --from=download --chown=nobody:nogroup /dist/rutorrent /var/www/rutorrent
 COPY --from=download --chown=nobody:nogroup /dist/rutorrent-geoip2 /var/www/rutorrent/plugins/geoip2
 COPY --from=download --chown=nobody:nogroup /dist/rutorrent-filemanager /var/www/rutorrent/plugins/filemanager
 COPY --from=download --chown=nobody:nogroup /dist/rutorrent-ratio /var/www/rutorrent/plugins/ratiocolor
-COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-material /var/www/rutorrent/plugins/theme/themes/MaterialDesign
 COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-quick /var/www/rutorrent/plugins/theme/themes/QuickBox
 COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix /var/www/rutorrent/plugins/theme/themes/Remix
 COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix-plex /var/www/rutorrent/plugins/theme/themes/Plex
