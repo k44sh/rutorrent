@@ -20,7 +20,7 @@ ___
 * [NGINX](https://nginx.org/download) with [PHP 8.3](https://www.php.net/releases/8.3/en.php)
 * [rTorrent](https://github.com/rakshasa/rtorrent) / [libTorrent](https://github.com/rakshasa/libtorrent) release compiled from source
 * Name resolving with [c-ares](https://github.com/rakshasa/rtorrent/wiki/Performance-Tuning#rtrorrent-with-c-ares) for asynchronous DNS requests (including name resolves)
-* [ruTorrent](https://github.com/Novik/ruTorrent) release (`v4.2.9`)
+* [ruTorrent](https://github.com/Novik/ruTorrent) release (`v4.3.1`)
 * ruTorrent [GeoIP2](https://github.com/Micdu70/geoip2-rutorrent) plugin
 * ruTorrent [Filemanager](https://github.com/nelu/rutorrent-filemanager) plugin
 * ruTorrent [Ratiocolors](https://github.com/Gyran/rutorrent-ratiocolor) plugin
