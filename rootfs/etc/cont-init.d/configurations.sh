@@ -66,7 +66,7 @@ RU_SCHEDULE_RAND=${RU_SCHEDULE_RAND:-10}
 RU_LOG_FILE=${RU_LOG_FILE:-${CONFIG_PATH}/rutorrent/rutorrent.log}
 RU_DO_DIAGNOSTIC=${RU_DO_DIAGNOSTIC:-true}
 RU_CACHED_PLUGIN_LOADING=${RU_CACHED_PLUGIN_LOADING:-false}
-RU_REMOVE_CORE_PLUGINS=${RU_REMOVE_CORE_PLUGINS:-httprpc}
+RU_REMOVE_CORE_PLUGINS=${RU_REMOVE_CORE_PLUGINS:-false}
 RU_SAVE_UPLOADED_TORRENTS=${RU_SAVE_UPLOADED_TORRENTS:-true}
 RU_OVERWRITE_UPLOADED_TORRENTS=${RU_OVERWRITE_UPLOADED_TORRENTS:-false}
 RU_FORBID_USER_SETTINGS=${RU_FORBID_USER_SETTINGS:-false}
@@ -345,7 +345,7 @@ cat > /var/www/rutorrent/plugins/create/conf.php <<EOL
 <?php
 
 \$useExternal = 'mktorrent';
-\$pathToCreatetorrent = '/usr/local/bin/mktorrent';
+\$pathToCreatetorrent = '/usr/bin/mktorrent';
 \$recentTrackersMaxCount = 15;
 EOL
 chown nobody:nogroup "/var/www/rutorrent/plugins/create/conf.php"

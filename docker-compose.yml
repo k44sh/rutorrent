@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   ### https://github.com/k44sh/rutorrent
   rutorrent:
