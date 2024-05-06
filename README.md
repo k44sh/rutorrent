@@ -24,7 +24,6 @@ ___
 * ruTorrent [GeoIP2](https://github.com/Micdu70/geoip2-rutorrent) plugin
 * ruTorrent [Filemanager](https://github.com/nelu/rutorrent-filemanager) plugin
 * ruTorrent [Ratiocolors](https://github.com/Gyran/rutorrent-ratiocolor) plugin
-* ruTorrent [MaterialDesign](https://github.com/themightykitten/ruTorrent-MaterialDesign) theme
 * ruTorrent [rtModern-Remix](https://github.com/Teal-c/rtModern-Remix) theme
 * ruTorrent [QuickBox](https://github.com/TrimmingFool/club-QuickBox) theme
 * [Radarr](https://radarr.video)/[Sonarr](https://sonarr.tv) hardlinks compliance
@@ -147,7 +146,7 @@ docker run -d --name rutorrent \
 
 ### ruTorrent
 
-* `RU_REMOVE_CORE_PLUGINS`: Remove ruTorrent core plugins ; comma separated (default `httprpc`)
+* `RU_REMOVE_CORE_PLUGINS`: Remove ruTorrent core plugins ; comma separated (default `false`)
 * `RU_HTTP_USER_AGENT`: ruTorrent HTTP user agent (default `Mozilla/5.0 (Windows NT 6.0; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0`)
 * `RU_HTTP_TIME_OUT`: ruTorrent HTTP timeout in seconds (default `30`)
 * `RU_HTTP_USE_GZIP`: Use HTTP Gzip compression (default `true`)
