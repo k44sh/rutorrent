@@ -26,7 +26,7 @@ Container build:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   tags:
-    - saas-linux-xlarge-amd64
+    - saas-linux-medium-amd64
   before_script:
     - echo -n $CI_JOB_TOKEN | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
     - echo -n $GITHUB_TOKEN | docker login -u $GITHUB_USER --password-stdin ghcr.io
