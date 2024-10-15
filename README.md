@@ -20,11 +20,10 @@ ___
 * [NGINX](https://nginx.org/download) with [PHP 8.3](https://www.php.net/releases/8.3/en.php)
 * [rTorrent](https://github.com/rakshasa/rtorrent) / [libTorrent](https://github.com/rakshasa/libtorrent) release compiled from source
 * Name resolving with [c-ares](https://github.com/rakshasa/rtorrent/wiki/Performance-Tuning#rtrorrent-with-c-ares) for asynchronous DNS requests (including name resolves)
-* [ruTorrent](https://github.com/Novik/ruTorrent) release (`v4.3.6`)
+* [ruTorrent](https://github.com/Novik/ruTorrent) release (`v5.1`)
 * ruTorrent [GeoIP2](https://github.com/Micdu70/geoip2-rutorrent) plugin
 * ruTorrent [Filemanager](https://github.com/nelu/rutorrent-filemanager) plugin
 * ruTorrent [Ratiocolors](https://github.com/Gyran/rutorrent-ratiocolor) plugin
-* ruTorrent [rtModern-Remix](https://github.com/Teal-c/rtModern-Remix) theme
 * ruTorrent [QuickBox](https://github.com/TrimmingFool/club-QuickBox) theme
 * [Radarr](https://radarr.video)/[Sonarr](https://sonarr.tv) hardlinks compliance
 * [mktorrent](https://github.com/Rudde/mktorrent) installed for ruTorrent create plugin
@@ -146,7 +145,7 @@ docker run -d --name rutorrent \
 
 ### ruTorrent
 
-* `RU_REMOVE_CORE_PLUGINS`: Remove ruTorrent core plugins ; comma separated (default `false`)
+* `RU_REMOVE_CORE_PLUGINS`: Remove ruTorrent core plugins ; comma separated (default `dump`)
 * `RU_HTTP_USER_AGENT`: ruTorrent HTTP user agent (default `Mozilla/5.0 (Windows NT 6.0; WOW64; rv:12.0) Gecko/20100101 Firefox/12.0`)
 * `RU_HTTP_TIME_OUT`: ruTorrent HTTP timeout in seconds (default `30`)
 * `RU_HTTP_USE_GZIP`: Use HTTP Gzip compression (default `true`)
