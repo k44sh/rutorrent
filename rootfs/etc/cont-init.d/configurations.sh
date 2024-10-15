@@ -524,8 +524,8 @@ mkdir -p /etc/services.d/rtorrent
 cat > /etc/services.d/rtorrent/run <<EOL
 #!/usr/bin/execlineb -P
 with-contenv
-/bin/export HOME ${CONFIG_PATH}/rtorrent
-/bin/export PWD ${CONFIG_PATH}/rtorrent
+/usr/bin/export HOME ${CONFIG_PATH}/rtorrent
+/usr/bin/export PWD ${CONFIG_PATH}/rtorrent
 s6-setuidgid ${PUID}:${PGID}
 EOL
 if [ -z "${WAN_IP}" ]; then

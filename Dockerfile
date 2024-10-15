@@ -1,7 +1,7 @@
-ARG ALPINE_VERSION=latest
+ARG ALPINE_VERSION=edge
 ARG LIBSIG_VERSION=3.0.7
-ARG CARES_VERSION=1.32.2
-ARG CURL_VERSION=8.8.0
+ARG CARES_VERSION=1.34.1
+ARG CURL_VERSION=8.10.1
 ARG GEOIP2_PHPEXT_VERSION=1.3.1
 ARG XMLRPC_VERSION=01.60.00
 ARG LIBTORRENT_VERSION=0.13.8
@@ -27,6 +27,7 @@ RUN apk --update --no-cache add \
     libnl3 \
     libnl3-dev \
     libtool \
+    libpsl-dev \
     libxslt-dev \
     linux-headers \
     ncurses-dev \
@@ -53,7 +54,7 @@ ARG CARES_VERSION
 WORKDIR /tmp/cares
 RUN curl -sSL "https://github.com/c-ares/c-ares/releases/download/v${CARES_VERSION}/c-ares-${CARES_VERSION}.tar.gz" | tar -xz --strip 1
 RUN ./configure
-RUN make -j $(nproc) CFLAGS="-O2 -flto"
+RUN make -j $(nproc) CFLAGS="-O3 -flto"
 RUN make install -j $(nproc)
 RUN make DESTDIR=${DIST_PATH} install -j $(nproc)
 
@@ -67,7 +68,7 @@ RUN ./configure \
   --with-brotli \
   --with-ssl \
   --with-zlib
-RUN make -j $(nproc) CFLAGS="-O2 -flto -pipe"
+RUN make -j $(nproc) CFLAGS="-O3 -flto -pipe"
 RUN make install -j $(nproc)
 RUN make DESTDIR=${DIST_PATH} install -j $(nproc)
 
@@ -86,8 +87,10 @@ WORKDIR /tmp/xmlrpc-c
 RUN svn checkout -q "http://svn.code.sf.net/p/xmlrpc-c/code/release_number/${XMLRPC_VERSION}/" . && rm -rf .svn
 RUN ./configure \
    --disable-wininet-client \
-   --disable-libwww-client
-RUN make -j $(nproc) CXXFLAGS="-flto"
+   --disable-libwww-client \
+   --disable-abyss-server \
+   --disable-cgi-server
+RUN make -j $(nproc) CXXFLAGS="-w -O3 -flto"
 RUN make install -j $(nproc)
 RUN make DESTDIR=${DIST_PATH} install -j $(nproc)
 RUN mkdir -p ${DIST_PATH}/usr/lib/php83/modules
@@ -98,8 +101,11 @@ WORKDIR /tmp/libtorrent
 RUN git clone -q "https://github.com/rakshasa/libtorrent" . && git reset --hard v${LIBTORRENT_VERSION} && rm -rf .git
 RUN ./autogen.sh
 RUN ./configure \
-  --with-posix-fallocate
-RUN make -j $(nproc) CXXFLAGS="-O2 -flto"
+  --with-posix-fallocate \
+  --enable-aligned \
+  --disable-instrumentation \
+  --enable-udns
+RUN make -j $(nproc) CXXFLAGS="-w -O3 -flto -Werror=odr -Werror=lto-type-mismatch -Werror=strict-aliasing"
 RUN make install -j $(nproc)
 RUN make DESTDIR=${DIST_PATH} install -j $(nproc)
 
@@ -110,7 +116,7 @@ RUN ./autogen.sh
 RUN ./configure \
   --with-xmlrpc-c \
   --with-ncurses
-RUN make -j $(nproc) CXXFLAGS="-O2 -flto"
+RUN make -j $(nproc) CXXFLAGS="-w -O3 -flto -Werror=odr -Werror=lto-type-mismatch -Werror=strict-aliasing"
 RUN make install -j $(nproc)
 RUN make DESTDIR=${DIST_PATH} install -j $(nproc)
 
@@ -122,7 +128,7 @@ RUN apk --update --no-cache add curl git tar xz
 ARG RUTORRENT_REVISION
 WORKDIR /dist/rutorrent
 RUN git clone -q "https://github.com/Novik/ruTorrent" . && git reset --hard ${RUTORRENT_REVISION} && rm -rf .git
-RUN rm -rf conf/users plugins/geoip plugins/_cloudflare share
+RUN rm -rf conf/users plugins/dump plugins/geoip plugins/_cloudflare share
 
 WORKDIR /dist/rutorrent-geoip2
 RUN git clone -q "https://github.com/Micdu70/geoip2-rutorrent" . && rm -rf .git
@@ -136,16 +142,16 @@ RUN git clone -q "https://github.com/Gyran/rutorrent-ratiocolor" . && rm -rf .gi
 WORKDIR /dist/rutorrent-theme-quick
 RUN git clone -q "https://github.com/TrimmingFool/club-QuickBox" . && rm -rf .git
 
-WORKDIR /dist/rutorrent-theme-rtmodern-remix
-RUN git clone -q "https://github.com/Teal-c/rtModern-Remix" . && rm -rf .git \
-    && cp -ar /dist/rutorrent-theme-rtmodern-remix /dist/rutorrent-theme-rtmodern-remix-plex \
-    && cat themes/plex.css > custom.css \
-    && cp -ar /dist/rutorrent-theme-rtmodern-remix /dist/rutorrent-theme-rtmodern-remix-jellyfin \
-    && cat themes/jellyfin.css > custom.css \
-    && cp -ar /dist/rutorrent-theme-rtmodern-remix /dist/rutorrent-theme-rtmodern-remix-jellyfin-bg \
-    && cat themes/jellyfin-bg.css > custom.css \
-    && cp -ar /dist/rutorrent-theme-rtmodern-remix /dist/rutorrent-theme-rtmodern-remix-lightpink \
-    && cat themes/light-pink.css > custom.css
+#WORKDIR /dist/rutorrent-theme-rtmodern-remix
+#RUN git clone -q "https://github.com/Teal-c/rtModern-Remix" . && rm -rf .git \
+#    && cp -ar /dist/rutorrent-theme-rtmodern-remix /dist/rutorrent-theme-rtmodern-remix-plex \
+#    && cat themes/plex.css > custom.css \
+#    && cp -ar /dist/rutorrent-theme-rtmodern-remix /dist/rutorrent-theme-rtmodern-remix-jellyfin \
+#    && cat themes/jellyfin.css > custom.css \
+#    && cp -ar /dist/rutorrent-theme-rtmodern-remix /dist/rutorrent-theme-rtmodern-remix-jellyfin-bg \
+#    && cat themes/jellyfin-bg.css > custom.css \
+#    && cp -ar /dist/rutorrent-theme-rtmodern-remix /dist/rutorrent-theme-rtmodern-remix-lightpink \
+#    && cat themes/light-pink.css > custom.css
 
 WORKDIR /dist/mmdb
 RUN curl -SsOL "https://github.com/crazy-max/geoip-updater/raw/mmdb/GeoLite2-City.mmdb"
@@ -212,6 +218,7 @@ RUN apk --update --no-cache add \
     php83-zlib \
     python3 \
     py3-pip \
+    py3-virtualenv \
     p7zip \
     s6-overlay \
     shadow \
@@ -222,6 +229,10 @@ RUN apk --update --no-cache add \
     util-linux \
     zip \
     zlib \
+  && python3 -m venv /opt/venv \
+  && . /opt/venv/bin/activate \
+  && pip install --upgrade pip \
+  && deactivate \
   && addgroup -g ${PGID} rtorrent \
   && adduser -D -H -u ${PUID} -G rtorrent -s /bin/sh rtorrent \
   && rm -rf /tmp/* /var/cache/apk/*
@@ -239,11 +250,11 @@ COPY --from=download --chown=nobody:nogroup /dist/rutorrent-geoip2 /var/www/ruto
 COPY --from=download --chown=nobody:nogroup /dist/rutorrent-filemanager /var/www/rutorrent/plugins/filemanager
 COPY --from=download --chown=nobody:nogroup /dist/rutorrent-ratio /var/www/rutorrent/plugins/ratiocolor
 COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-quick /var/www/rutorrent/plugins/theme/themes/QuickBox
-COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix /var/www/rutorrent/plugins/theme/themes/Remix
-COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix-plex /var/www/rutorrent/plugins/theme/themes/Plex
-COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix-jellyfin /var/www/rutorrent/plugins/theme/themes/Jellyfin
-COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix-jellyfin-bg /var/www/rutorrent/plugins/theme/themes/Jellyfin-bg
-COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix-lightpink /var/www/rutorrent/plugins/theme/themes/LightPink
+#COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix /var/www/rutorrent/plugins/theme/themes/Remix
+#COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix-plex /var/www/rutorrent/plugins/theme/themes/Plex
+#COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix-jellyfin /var/www/rutorrent/plugins/theme/themes/Jellyfin
+#COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix-jellyfin-bg /var/www/rutorrent/plugins/theme/themes/Jellyfin-bg
+#COPY --from=download --chown=nobody:nogroup /dist/rutorrent-theme-rtmodern-remix-lightpink /var/www/rutorrent/plugins/theme/themes/LightPink
 
 VOLUME [ "/config", "/data", "/passwd" ]
 
