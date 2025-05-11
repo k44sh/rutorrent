@@ -8,13 +8,15 @@ variable "CI_JOB_STARTED_AT"      { default = "$CI_JOB_STARTED_AT" }
 variable "CI_COMMIT_SHA"          { default = "$CI_COMMIT_SHA" }
 variable "CI_PROJECT_DESCRIPTION" { default = "$CI_PROJECT_DESCRIPTION" }
 variable "tag"                    { default = "$tag" }
+variable "MM_ACCOUNT"             { default = "$MM_ACCOUNT" }
+variable "MM_LICENSE"             { default = "$MM_LICENSE" }
 
 group "default" { targets = [ "local" ] }
 
 target "default" {
   cache-from = [
     "type=registry,ref=${dockerhub}:latest",
-    "type=registry,ref=${dockerhub}:cache",
+#    "type=registry,ref=${dockerhub}:cache",
     "type=registry,ref=${dockerhub}:edge",
     "type=registry,ref=${dockerhub}:dev"
     ]
@@ -24,6 +26,10 @@ target "default" {
     "org.opencontainers.image.documentation" = "${source}"
     "org.opencontainers.image.licenses" = "MIT"
     "org.opencontainers.image.vendor" = "k44sh"
+  }
+  args = {
+    MM_ACCOUNT = "${MM_ACCOUNT}"
+    MM_LICENSE = "${MM_LICENSE}"
   }
 }
 
@@ -37,7 +43,7 @@ target "local" {
 target "registry" {
   inherits  = [ "default" ]
   output    = [ "type=image,push=true" ]
-  cache-to  = [ "type=registry,mode=max,ref=${dockerhub}:cache" ]
+#  cache-to  = [ "type=registry,mode=max,ref=${dockerhub}:cache" ]
   labels    = {
     "org.opencontainers.image.title" = "${CI_PROJECT_TITLE}"
     "org.opencontainers.image.created" = "${CI_JOB_STARTED_AT}"

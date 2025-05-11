@@ -19,7 +19,7 @@ throttle.global_up.max_rate.set_kb = 0
 dht.mode.set = auto
 
 # Enable peer exchange (for torrents not marked private)
-protocol.pex.set = no
+protocol.pex.set = yes
 
 # Default directory to save the downloaded torrents
 #directory.default.set = 
