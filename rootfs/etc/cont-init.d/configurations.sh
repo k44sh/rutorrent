@@ -22,6 +22,7 @@ echo -e "\n${bold}rTorrent/ruTorrent Configuration${norm}\n"
 # General
 CONFIG_PATH=${CONFIG_PATH:-/config}
 TOPDIR_PATH=${TOPDIR_PATH:-/data}
+PASSWD_PATH=${PASSWD_PATH:-/passwd}
 DOWNLOAD_PATH=${DOWNLOAD_PATH:-${TOPDIR_PATH}/downloads}
 WAN_IP=${WAN_IP:-$(dig -4 +short myip.opendns.com @resolver1.opendns.com)}
 TZ=${TZ:-UTC}
@@ -48,6 +49,7 @@ WEBDAV_HEALTH_PORT=$((WEBDAV_PORT + 1))
 GEOIP2_CONF=${GEOIP2_CONF:-/etc/geoip2.conf}
 GEOIP2_PATH=${GEOIP2_PATH:-${CONFIG_PATH}/geoip}
 GEOIP2_CRON=${GEOIP2_CRON:-0 0 * * *}
+NGINX_CRON=${NGINX_CRON:-1 0 * * *}
 MM_ACCOUNT=${MM_ACCOUNT:-}
 MM_LICENSE=${MM_LICENSE:-}
 
@@ -117,6 +119,7 @@ EOL
 
 # Init
 echo "  ${norm}[${green}+${norm}] Setting files and folders..."
+mkdir -p ${TOPDIR_PATH}
 mkdir -p /passwd \
   /etc/nginx/conf.d \
   /etc/rtorrent \
@@ -125,7 +128,6 @@ mkdir -p /passwd \
   /var/run/nginx \
   /var/run/php-fpm \
   /var/run/rtorrent \
-  ${CONFIG_PATH}/geoip \
   ${CONFIG_PATH}/rtorrent/log \
   ${CONFIG_PATH}/rtorrent/.session \
   ${CONFIG_PATH}/rtorrent/watch \
@@ -137,7 +139,7 @@ mkdir -p /passwd \
   ${CONFIG_PATH}/rutorrent/share/settings \
   ${CONFIG_PATH}/rutorrent/themes \
   ${DOWNLOAD_PATH} \
-  ${TOPDIR_PATH}
+  ${GEOIP2_PATH}
 
 touch /passwd/rpc.htpasswd \
   /passwd/rutorrent.htpasswd \
@@ -244,6 +246,10 @@ EOL
   (sleep 5 && geoipupdate -v -f ${GEOIP2_CONF} -d ${GEOIP2_PATH}) &
 fi
 
+if [ "${WAN_IP}" ]; then
+  echo "  ${norm}[${green}+${norm}] Using External IP ${green}${WAN_IP}${norm}"
+fi
+
 # rTorrent local config
 echo "  ${norm}[${green}+${norm}] Checking rTorrent bootstrap configuration..."
 sed -e "s!@RT_LOG_LEVEL@!$RT_LOG_LEVEL!g" \
@@ -271,7 +277,6 @@ fi
 if [ ! -f ${CONFIG_PATH}/rtorrent/.rtorrent.rc ]; then
   echo "  ${norm}[${yellow}+${norm}] Creating default configuration..."
   cp /etc/rtorrent/.rtorrent.rc ${CONFIG_PATH}/rtorrent/.rtorrent.rc
-  chown rtorrent: ${CONFIG_PATH}/rtorrent/.rtorrent.rc
 fi
 
 # ruTorrent config
@@ -355,20 +360,18 @@ cat > /var/www/rutorrent/conf/config.php <<EOL
 \$enableCSRFCheck = false; // If true then Origin and Referer will be checked
 \$enabledOrigins = array(); // List of enabled domains for CSRF check (only hostnames, without protocols, port etc.). If empty, then will retrieve domain from HTTP_HOST / HTTP_X_FORWARDED_HOST
 EOL
-chown nobody:nogroup "/var/www/rutorrent/conf/config.php"
 
 # Symlinking ruTorrent config
-ln -sf ${CONFIG_PATH}/rutorrent/conf/users /var/www/rutorrent/conf/users
+rm -f /var/www/rutorrent/conf/users
+ln -s "${CONFIG_PATH}/rutorrent/conf/users" /var/www/rutorrent/conf/users
 if [ ! -f ${CONFIG_PATH}/rutorrent/conf/access.ini ]; then
   mv /var/www/rutorrent/conf/access.ini ${CONFIG_PATH}/rutorrent/conf/access.ini
   ln -sf ${CONFIG_PATH}/rutorrent/conf/access.ini /var/www/rutorrent/conf/access.ini
 fi
-chown rtorrent: ${CONFIG_PATH}/rutorrent/conf/access.ini
 if [ ! -f ${CONFIG_PATH}/rutorrent/conf/plugins.ini ]; then
   mv /var/www/rutorrent/conf/plugins.ini ${CONFIG_PATH}/rutorrent/conf/plugins.ini
   ln -sf ${CONFIG_PATH}/rutorrent/conf/plugins.ini /var/www/rutorrent/conf/plugins.ini
 fi
-chown rtorrent: ${CONFIG_PATH}/rutorrent/conf/plugins.ini
 
 # Remove ruTorrent core plugins
 if [ "$RU_REMOVE_CORE_PLUGINS" != "false" ]; then
@@ -450,6 +453,17 @@ if [ ! -f ${CONFIG_PATH}/rutorrent/share/settings/unpack.dat ]; then
   > ${CONFIG_PATH}/rutorrent/share/settings/unpack.dat
 fi
 
+# Check GeoIP2 databases
+echo "  ${norm}[${green}+${norm}] Setting GeoIP2 databases..."
+for mmdb in GeoLite2-ASN GeoLite2-City GeoLite2-Country; do
+  if [ ! -f "${GEOIP2_PATH}/${mmdb}.mmdb" ]; then
+    cp -f "/var/mmdb/${mmdb}.mmdb" "${GEOIP2_PATH}/"
+  fi
+  if [ -d "/var/www/rutorrent/plugins/geoip2" ]; then
+    ln -sf "${GEOIP2_PATH}/${mmdb}.mmdb" "/var/www/rutorrent/plugins/geoip2/${mmdb}.mmdb"
+  fi
+done
+
 # Check ruTorrent plugins
 echo "  ${norm}[${green}+${norm}] Checking ruTorrent custom plugins..."
 plugins=$(ls -l ${CONFIG_PATH}/rutorrent/plugins | grep -E '^d' | awk '{print $9}')
@@ -485,19 +499,6 @@ for pluginConfFile in ${CONFIG_PATH}/rutorrent/plugins-conf/*.php; do
   chown nobody:nogroup "/var/www/rutorrent/plugins/${pluginName}/conf.php"
 done
 
-# GeoIP2 databases
-echo "  ${norm}[${green}+${norm}] Checking GeoIP2 databases for ${green}${geoip2}${norm} plugin..."
-if [ -d "/var/www/rutorrent/plugins/geoip2" ]; then
-  if [ ! "$(ls -A ${CONFIG_PATH}/geoip)" ]; then
-    cp -f /var/mmdb/*.mmdb ${CONFIG_PATH}/geoip/
-  fi
-  ln -sf ${CONFIG_PATH}/geoip/GeoLite2-ASN.mmdb /var/www/rutorrent/plugins/geoip2/database/GeoLite2-ASN.mmdb
-  ln -sf ${CONFIG_PATH}/geoip/GeoLite2-City.mmdb /var/www/rutorrent/plugins/geoip2/database/GeoLite2-City.mmdb
-  ln -sf ${CONFIG_PATH}/geoip/GeoLite2-Country.mmdb /var/www/rutorrent/plugins/geoip2/database/GeoLite2-Country.mmdb
-else
-  echo "    ${norm}[${red}-${norm}] ${red}WARNING: GeoIP2 does not exist${norm}"
-fi
-
 # Check ruTorrent themes
 echo "  ${norm}[${green}+${norm}] Checking ruTorrent custom themes..."
 themes=$(ls -l ${CONFIG_PATH}/rutorrent/themes | grep -E '^d' | awk '{print $9}')
@@ -510,16 +511,13 @@ done
 
 # Perms
 echo "  ${norm}[${green}+${norm}] Fixing perms..."
-chown rtorrent: \
+chown -R rtorrent:rtorrent \
   ${CONFIG_PATH} \
-  ${CONFIG_PATH}/rtorrent \
-  ${CONFIG_PATH}/rutorrent \
-  ${DOWNLOAD_PATH} \
   ${TOPDIR_PATH} \
-  ${RU_LOG_FILE}
+  ${PASSWD_PATH} \
+  ${GEOIP2_PATH}
 
-chown -R rtorrent: \
-  /passwd \
+chown -R rtorrent:rtorrent \
   /etc/rtorrent \
   /var/cache/nginx \
   /var/lib/nginx \
@@ -528,20 +526,6 @@ chown -R rtorrent: \
   /var/run/nginx \
   /var/run/php-fpm \
   /var/run/rtorrent \
-  ${CONFIG_PATH}/geoip \
-  ${CONFIG_PATH}/rtorrent/log \
-  ${CONFIG_PATH}/rtorrent/.session \
-  ${CONFIG_PATH}/rtorrent/watch \
-  ${CONFIG_PATH}/rutorrent/conf \
-  ${CONFIG_PATH}/rutorrent/plugins \
-  ${CONFIG_PATH}/rutorrent/plugins-conf \
-  ${CONFIG_PATH}/rutorrent/share \
-  ${CONFIG_PATH}/rutorrent/themes
-
-chmod 644 \
-  ${CONFIG_PATH}/rtorrent/.rtorrent.rc \
-  /passwd/*.htpasswd \
-  /etc/rtorrent/.rtlocal.rc
 
 echo -e "  ${norm}[${green}+${norm}] Settings services...\n"
 mkdir -p /etc/services.d/nginx
@@ -574,6 +558,7 @@ EOL
 if [[ ! -z "$MM_ACCOUNT" ]] && [[ ! -z "$MM_LICENSE" ]]; then
   cat >> /etc/crontabs/root <<EOL
 ${GEOIP2_CRON} geoipupdate -v -f ${GEOIP2_CONF} -d ${GEOIP2_PATH} && chown rtorrent:rtorrent ${GEOIP2_PATH} -R >/proc/1/fd/1 2>/proc/1/fd/2
+${NGINX_CRON} nginx -s reload >/proc/1/fd/1 2>/proc/1/fd/2
 EOL
   mkdir -p /etc/services.d/cron
   cat > /etc/services.d/cron/run <<EOL
