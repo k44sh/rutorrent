@@ -125,7 +125,7 @@ Automatic tests:
         sleep 1
       done
 
-Staging deploy:
+.Staging deploy:
   stage: Staging
   image:
     name: alpine:latest
@@ -179,7 +179,7 @@ Staging deploy:
     deployment_tier: staging
   when: manual
 
-Staging stop:
+.Staging stop:
   stage: Staging
   image:
     name: alpine:latest
