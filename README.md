@@ -43,7 +43,7 @@ ___
 * [geoipupdate](https://github.com/maxmind/geoipupdate) to update MaxMind's GeoIP2 databases
 * [Cloudflare](https://www.cloudflare.com/ips/) trusted addresses for NGINX Real IP (_not enable by default_)
 * [libTorrent](https://github.com/rakshasa/libtorrent) (`0.15.3`) / [rTorrent](https://github.com/rakshasa/rtorrent) (`0.15.3`) compiled from source
-* [ruTorrent](https://github.com/Novik/ruTorrent) release (`v5.2.6`)
+* [ruTorrent](https://github.com/Novik/ruTorrent) release (`v5.2.7`)
 * [c-ares](https://github.com/rakshasa/rtorrent/wiki/Performance-Tuning#rtrorrent-with-c-ares) and [UDNS](https://www.corpit.ru/mjt/udns.html) for asynchronous DNS requests
 * [mktorrent](https://github.com/Rudde/mktorrent) installed for ruTorrent create plugin
 * [Radarr](https://radarr.video) / [Sonarr](https://sonarr.tv) hardlinks compliance
