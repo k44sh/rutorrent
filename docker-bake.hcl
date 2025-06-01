@@ -16,7 +16,7 @@ group "default" { targets = [ "local" ] }
 target "default" {
   cache-from = [
     "type=registry,ref=${dockerhub}:latest",
-#    "type=registry,ref=${dockerhub}:cache",
+    "type=registry,ref=${gitlab}:cache",
     "type=registry,ref=${dockerhub}:edge",
     "type=registry,ref=${dockerhub}:dev"
     ]
@@ -43,7 +43,7 @@ target "local" {
 target "registry" {
   inherits  = [ "default" ]
   output    = [ "type=image,push=true" ]
-#  cache-to  = [ "type=registry,mode=max,ref=${dockerhub}:cache" ]
+  cache-to  = [ "type=registry,mode=max,ref=${gitlab}:cache" ]
   labels    = {
     "org.opencontainers.image.title" = "${CI_PROJECT_TITLE}"
     "org.opencontainers.image.created" = "${CI_JOB_STARTED_AT}"
